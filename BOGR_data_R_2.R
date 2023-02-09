@@ -10,17 +10,39 @@ BOGR.wet <- BOGR.crop[BOGR.crop$Treatment !="dry" ,]
 BOGR.dry <- BOGR.crop[BOGR.crop$Treatment != "wet" ,]
 
 #Aim 1 variation
-height_pop_anova <- aov(length_cm_20220801 ~ Population, data = BOGR.crop)
+BOGR_ht_pop_anova <- aov(length_cm_20220801 ~ Population, data = BOGR.crop)
 summary(height_pop_anova)
 
-height_sz_anova <- aov(length_cm_20220801 ~ seed_zone, data = BOGR)
-summary(height_sz_anova)
+plot(BOGR_ht_pop_anova)
 
-num_inf_pop_an <- aov( num_inf_20220927 ~ Population, data = BOGR.crop)
-summary(num_inf_pop_an)
+BOGR.ht.pop.lm <- lmer(log(length_cm_20220801) ~ Population + (1|Block), data = BOGR.crop)
+BOGR.pair.ht.pop.lm <- emmeans(BOGR.ht.pop.lm, specs = pairwise ~ Population)
+summary(BOGR.pair.ht.pop.lm)
 
-num_inf_sz_an <- aov( num_inf_20220927 ~ seed_zone, data = BOGR.crop)
-summary(num_inf_sz_an)
+BOGR.ht.sz.lm <- lmer(log(length_cm_20220801) ~ seed_zone + (1|Block), data = BOGR.crop)
+BOGR.pair.ht.sz.lm <- emmeans(BOGR.ht.sz.lm, specs = pairwise ~ seed_zone)
+summary(BOGR.pair.ht.sz.lm)
+
+BOGR_inf_glm <- glmer( num_inf_20220927 ~ Population + (1|Block), 
+                       data = BOGR.crop, family = poisson (link ="log"))
+BOGR_pair_inf <- emmeans(BOGR_inf_glm, specs = pairwise ~ Population)
+summary(BOGR_pair_inf)
+
+BOGR_inf_sz_glm <- glmer( num_inf_20220927 ~ seed_zone + (1|Block), 
+                       data = BOGR.crop, family = poisson (link ="log"))
+BOGR_pair_sz_inf <- emmeans(BOGR_inf_sz_glm, specs = pairwise ~ seed_zone)
+summary(BOGR_pair_sz_inf)
+
+
+
+BOGR_ht_sz_anova <- aov(length_cm_20220801 ~ seed_zone, data = BOGR.crop)
+summary(BOGR_ht_sz_anova)
+
+BOGR_num_inf_pop_an <- aov( num_inf_20220927 ~ Population, data = BOGR.crop)
+summary(BOGR_num_inf_pop_an)
+
+BOGR_num_inf_sz_an <- aov( num_inf_20220927 ~ seed_zone, data = BOGR.crop)
+summary(BOGR_num_inf_sz_an)
 
 days_mort_pop_an <- aov( days_until_mortality ~ Population, data=BOGR.crop)
 summary(days_mort_pop_an)
@@ -54,7 +76,16 @@ boxplot(days_until_mortality ~ Population, data=BOGR, main = "BOGR Days until mo
 boxplot(days_until_mortality ~ seed_zone, data=BOGR, main = "BOGR Days until mortality by Seed Zone", 
         xlab = "Seed Zone", ylab = "Days until mortality",cex.axis=0.25, las=2)
 
-survival_glm <- glm(survival_20220927 ~ Population, 
+
+BOGR_inf_glm
+summary(BOGR_inf_glm)
+plot(BOGR_inf_glm)
+
+hist(BOGR$num_inf_20220927)
+
+colnames(BOGR.crop)
+
+BOGR_survival_glm <- glm(survival_20220927 ~ Population, 
                     data = BOGR, family = binomial (link ="logit"))
 
 summary(survival_glm)
@@ -64,12 +95,13 @@ str(BOGR)
 pop.list <- as.data.frame(unique(BOGR.crop$Population))
 pop.list
 colnames(pop.list) <- "Population"
-survival.pred <- predict(survival_glm, pop.list, se.fit = TRUE, type = "response", interval = "confidence" )
+pop.list
+survival.pred <- predict(BOGR_survival_glm, BOGR.pop.list, se.fit = TRUE, type = "response", interval = "confidence" )
 survival.pred
 survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 21)
 barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
-#zoom x axis from 0 to 1
-#error bars
+
+
 
 boxplot(length_cm_20220801 ~ Population,data=BOGR.wet, main="BOGR Plant Height by Population - Wet", 
         xlab="Population", ylab="Height(cm)",cex.axis=0.25, las=2)
@@ -85,8 +117,98 @@ boxplot(num_inf_20220927 ~ Population, data = BOGR.dry,
         main = "BOGR Number of Inflorescenses by Population - Dry", xlab = "Population", 
         ylab = "Num of Inflorescenses",cex.axis=0.25, las=2 )
 
-height_pop_anova_tx <- aov(length_cm_20220801 ~ Population*Treatment, data = BOGR.crop)
-summary(height_pop_anova_tx)
+BOGR_ht_pop_anova_tx <- aov(length_cm_20220801 ~ Population*Treatment, data = BOGR.crop)
+summary(BOGR_ht_pop_anova_tx)
 
-inf_pop_anova_tx <- aov(num_inf_20220927 ~ Population*Treatment, data = BOGR.crop)
-summary(inf_pop_anova_tx)
+BOGR_inf_pop_anova_tx <- aov(num_inf_20220927 ~ Population*Treatment, data = BOGR.crop)
+summary(BOGR_inf_pop_anova_tx)
+        
+#add precip
+        
+BOGR_precip <- read.csv("20221129_BOGR_pptAnnual.csv", header = TRUE)
+pop.list
+unique(BOGR.crop$Population)
+
+BOGR.pop.list <- unique(as.character(BOGR.crop$Population))
+        
+BOGR.crop[  , 'Ppt_Annual'] <- NA
+        
+for (dd in 1:length(BOGR.pop.list)) { 
+  BOGR.crop$Ppt_Annual[grepl(BOGR.pop.list[dd], BOGR.crop$Population)] <- BOGR_precip$Mean_Annual_Ppt[dd] 
+        }
+BOGR.crop$Ppt_Annual
+
+head(BOGR.crop)
+
+BOGR_ppt_lm <- lmer(length_cm_20220801 ~ Ppt_Annual + (1|Block), data = BOGR.crop)
+plot(BOGR_ppt_lm)
+
+BOGR_ppt_inf_lm <- lmer(num_inf_20220927 ~ Ppt_Annual + (1|Block), data = BOGR.crop)
+plot(BOGR_ppt_inf_lm)
+
+
+plot(length_cm_20220801 ~ Ppt_Annual, data = BOGR.crop)
+plot(num_inf_20220927 ~ Ppt_Annual, data = BOGR.crop)
+
+
+#add elevation
+
+BOGR_elev <- read.csv("20230125_BOGR_elev.csv", header = TRUE)
+BOGR.crop[ , 'elev'] <- NA
+
+for (dd in 1:length(BOGR.pop.list)) { 
+  BOGR.crop$elev[grepl(BOGR.pop.list[dd], BOGR.crop$Population)] <- BOGR_elev$elevation[dd] 
+}
+
+BOGR.crop$elev
+
+BOGR_elev_lm <- lmer(length_cm_20220801 ~ elev + (1|Block), data = BOGR.crop)
+plot(BOGR_elev_lm)
+
+plot(length_cm_20220801 ~ elev, data = BOGR.crop)
+plot(num_inf_20220927 ~ elev, data = BOGR.crop)
+
+#add min winter temp
+
+BOGR_temp <- read.csv("20230118_BOGR_tminWinter.csv", header = TRUE)
+
+BOGR.crop[ , 'min_wint_temp'] <- NA
+
+for (dd in 1:length(BOGR.pop.list)) { 
+  BOGR.crop$min_wint_temp[grepl(BOGR.pop.list[dd], BOGR.crop$Population)] <- BOGR_temp$Mean_MinWinter_Temp[dd] 
+}
+BOGR.crop$min_wint_temp
+
+BOGR_temp_lm <- lmer(length_cm_20220801 ~ min_wint_temp + (1|Block), data = BOGR.crop)
+plot(BOGR_temp_lm)
+
+plot(length_cm_20220801 ~ min_wint_temp, data = BOGR.crop)
+plot(num_inf_20220927 ~ min_wint_temp, data = BOGR.crop)
+
+#add geog distance
+
+#AIC models ~ ht
+BOGR.climate.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ min_wint_temp + elev + (1|Block), data = BOGR.crop)
+BOGR.temp.precip.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ min_wint_temp + (1|Block), data = BOGR.crop)
+BOGR.ppt.elev.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ elev + (1|Block), data = BOGR.crop)
+BOGR.temp.elev.lm <- lmer(log(length_cm_20220801) ~ elev + min_wint_temp + (1|Block), data = BOGR.crop)
+BOGR_ppt_lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual + (1|Block), data = BOGR.crop)
+BOGR_temp_lm <- lmer(log(length_cm_20220801) ~ min_wint_temp + (1|Block), data = BOGR.crop)
+BOGR_elev_lm <- lmer(log(length_cm_20220801) ~ elev + (1|Block), data = BOGR.crop)
+
+
+models <- list(BOGR.climate.lm, BOGR.temp.precip.lm, BOGR.ppt.elev.lm, BOGR.temp.elev.lm, BOGR_ppt_lm, BOGR_temp_lm, BOGR_elev_lm)
+mod.names <- c('climate', 'temp.ppt', 'ppt.elev', 'temp.elev', 'ppt','temp', 'elev')
+aictab(cand.set = models, modnames = mod.names )
+
+#AIC models ~inf
+BOGR.inf.climate.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ min_wint_temp + elev + (1|Block), data = BOGR.crop)
+BOGR.inf.temp.precip.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ min_wint_temp + (1|Block), data = BOGR.crop)
+BOGR.inf.ppt.elev.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual+ elev + (1|Block), data = BOGR.crop)
+BOGR.inf.temp.elev.lm <- lmer(log(length_cm_20220801) ~ elev + min_wint_temp + (1|Block), data = BOGR.crop)
+
+
+
+models <- list(BOGR.climate.lm, BOGR.temp.precip.lm, BOGR.ppt.elev.lm, BOGR.temp.elev.lm, BOGR_ppt_lm, BOGR_temp_lm, BOGR_elev_lm)
+mod.names <- c('climate', 'temp.ppt', 'ppt.elev', 'temp.elev', 'ppt','temp', 'elev')
+aictab(cand.set = models, modnames = mod.names )
