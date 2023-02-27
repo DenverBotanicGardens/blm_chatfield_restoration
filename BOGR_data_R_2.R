@@ -50,6 +50,12 @@ summary(days_mort_pop_an)
 days_mort_sz_an <- aov( days_until_mortality ~ seed_zone, data=BOGR.crop)
 summary(days_mort_pop_an)
 
+boxplot(days_until_flowering ~ Population, data = BOGR.crop, main = "BOGR Days until flower by Population", 
+        xlab = "Population", ylab = "days until flower")
+
+boxplot(days_until_flowering ~ seed_zone, data = BOGR.crop, main = "BOGR Days until flower by Seed Zone", 
+        xlab = "Seed Zone", ylab = "days until flower")
+
 
 boxplot(length_cm_20220801 ~ Population,data=BOGR, main="BOGR Plant Height by Population", 
         xlab="Population", ylab="Height(cm)",cex.axis=0.25, las=2)

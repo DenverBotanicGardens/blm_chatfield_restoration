@@ -59,6 +59,13 @@ summary(days_mort_pop_an)
 
 #add colors to tx groups
 
+boxplot(days_until_flower ~ Population, data = ERNA.crop, main = "ERNA Days until flower by Population", 
+        xlab = "Population", ylab = "days until flower")
+
+boxplot(days_until_flower ~ seed_zone, data = ERNA.crop, main = "ERNA Days until flower by Seed Zone", 
+        xlab = "Seed Zones", ylab = "days until flower")
+
+
 boxplot(length_cm_20220915 ~ Population*treatment,data=ERNA.crop, main="ERNA Plant Height by Population", 
         xlab="Population", ylab="Height(cm)",cex.axis=0.25, las=2)
 

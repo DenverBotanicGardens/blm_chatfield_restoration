@@ -45,7 +45,7 @@ for (dd in 1:length(ERNA.pop.list)) {
   ERNA.crop$min_wint_temp[grepl(ERNA.pop.list[dd], ERNA.crop$Population)] <- ERNA_temp$Mean_MinWinter_Temp[dd]
 }
 unique(ERNA.crop$Population)
-unique(ERNA.crop$elev)
+unique(ERNA.crop$min_wint_temp)
 
 #add goeg distance
 ERNA_distance <- read.csv("ERNA_distance.csv")
@@ -70,6 +70,8 @@ survival_glm <- glm(survival_20221108 ~ Population,
                     data = ERNA, family = binomial (link ="logit"))
 survival_pair <- emmeans(survival_glm, specs = pair)
 
+
+
 days_mort_pop_an <- aov( days_until_mortality ~ Population, data=ERNA)
 summary(days_mort_pop_an)
 
@@ -80,15 +82,14 @@ summary(days_mort_pop_an)
 unique(ERNA.crop$Ppt_Annual)
 unique(ERNA.crop$Population)
 
-(ERNA.crop$Ppt_Annual - mean(ERNA.crop$Ppt_Annual)) / sd(ERNA.crop$Ppt_Annual)
-#fix NA in ERNA-UT931-436-10 pop
+
 ERNA.crop$Ppt_Annual_Z <- (ERNA.crop$Ppt_Annual - mean(ERNA.crop$Ppt_Annual)) / sd(ERNA.crop$Ppt_Annual)
 ERNA.crop$min_wint_temp_Z <- (ERNA.crop$min_wint_temp - mean(ERNA.crop$min_wint_temp)) / sd(ERNA.crop$min_wint_temp)
 ERNA.crop$elev_Z <- (ERNA.crop$elev - mean(ERNA.crop$elev)) / sd(ERNA.crop$elev)
 ERNA.crop$dist_km_Z <- (ERNA.crop$dist_km - mean(ERNA.crop$dist_km)) / sd(ERNA.crop$dist_km)
 
 #AIC for climate models
-climate_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + min_wint_temp_Z + elev_Z + (1|block), data = ERNA.crop)
+climate_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + min_wint_temp_Z + elev_Z + dist_km_Z + (1|block), data = ERNA.crop)
 temp.precip.lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + min_wint_temp_Z + (1|block), data = ERNA.crop)
 ppt_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + (1|block), data = ERNA.crop)
 ppt.elev <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + elev_Z + (1|block), data = ERNA.crop)
