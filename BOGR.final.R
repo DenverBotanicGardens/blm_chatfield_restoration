@@ -2,6 +2,8 @@ BOGR <- read.csv(file = 'BOGR_data.csv')
 BOGR.crop <- BOGR[1:1135,]
 
 BOGR.pop.list <- unique(as.character(BOGR.crop$Population))
+BOGR.pop.list.df <- as.data.frame(unique(BOGR.crop$Population))
+colnames(BOGR.pop.list.df) <- "Population"
 
 library(car)
 library(lme4)
@@ -49,8 +51,8 @@ BOGR.crop[ , 'dist_km'] <- NA
 for (dd in 1:length(BOGR.pop.list)) { 
   BOGR.crop$dist_km[grepl(BOGR.pop.list[dd], BOGR.crop$Population)] <- BOGR_distance$sld_km [dd] 
 }
-unique(BOGR.crop$dist_km)
-unique(BOGR.crop$Population)
+
+
 #emmeans comparisons
 BOGR.days.flower.lm <- lmer(days_until_flowering ~ Population + (1|Block), data=BOGR.crop)
 BOGR.days.flower.pair <- emmeans(BOGR.days.flower.lm, specs = pairwise ~ Population)
@@ -82,6 +84,36 @@ abline(lm(num_inf_20220927 ~ length_cm_20220801, data = BOGR.crop))
 #emmeans table
 
 unique(BOGR.crop$Population)
+
+#flowering proportion
+BOGR.flower.prop <- BOGR.crop %>% group_by(Population) %>% summarise(BOGR.flowering.prop=sum(flowering_Y_N_20220801, na.rm = TRUE)) %>% print(n=21)
+
+BOGR.crop %>%
+  group_by(Population) %>%
+  tally()%>% print(n=21)
+unique(BOGR.crop$Population)
+
+BOGR_flower_glm <- glm(flowering_Y_N_20220801 ~ Population, 
+                  data = BOGR.crop, family = binomial (link ="logit"))
+BOGR.flower.pred <- predict(BOGR_flower_glm, BOGR.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
+BOGR.flower.pred
+BOGR_flower_mat <- matrix(data = BOGR.flower.pred$fit, nrow = 1, ncol = 20)
+BOGR_flower_mat
+
+#survival proportion
+BOGR.survival.prop <- BOGR.crop %>% group_by(Population) %>% summarise(BOGR.survival.prop=sum(survival_20220801, na.rm = TRUE)) %>% print(n=21)
+BOGR.survival.prop
+BOGR.crop %>%
+  group_by(Population) %>%
+  tally()%>% print(n=21)
+BOGR.survival.glm <- glm(survival_20221108 ~ Population, 
+                    data = ERNA, family = binomial (link ="logit"))
+
+BOGR.survival.pred <- predict(BOGR.survival.glm, BOGR.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
+BOGR.survival.pred
+BOGR_survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 20)
+BOGR_survival_mat
+barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
 
 
 #rescale climate variables

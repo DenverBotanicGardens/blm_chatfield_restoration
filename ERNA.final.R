@@ -10,7 +10,8 @@ library(tidyverse)
 ERNA.crop <- ERNA[1:1124, ]
 
 ERNA.pop.list <- unique(as.character(ERNA.crop$Population))
-
+ERNA.pop.list.df <- as.data.frame(unique(ERNA.crop$Population))
+colnames(ERNA.pop.list.df) <- "Population"
 
 ERNA.ex.rep <- ERNA.crop[ERNA.crop$replaced_YorN !="Y",]
 
@@ -95,7 +96,21 @@ flower.pred <- predict(flower_glm, ERNA.pop.list.df, se.fit = TRUE, type = "resp
 flower.pred
 flower_mat <- matrix(data = flower.pred$fit, nrow = 1, ncol = 20)
 flower_mat
+
 #survival proportion
+survival.prop <- ERNA.crop %>% group_by(Population) %>% summarise(survival.prop=sum(survival_20221108, na.rm = TRUE)) 
+survival.prop
+ERNA.crop %>%
+  group_by(Population) %>%
+  tally()
+survival_glm <- glm(survival_20221108 ~ Population, 
+                    data = ERNA, family = binomial (link ="logit"))
+
+survival.pred <- predict(survival_glm, ERNA.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
+survival.pred
+survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 20)
+survival_mat
+barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
 
 #re-scale climate variables
 

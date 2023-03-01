@@ -6,6 +6,7 @@ library(emmeans)
 library(magrittr)
 library(AICcmodavg)
 library(stats)
+library(ggplot2)
 ERNA.crop <- ERNA[1:1124, ]
 
 ERNA.ex.rep <- ERNA.crop[ERNA.crop$replaced_YorN !="Y",]
@@ -60,18 +61,31 @@ summary(days_mort_pop_an)
 #add colors to tx groups
 
 boxplot(days_until_flower ~ Population, data = ERNA.crop, main = "ERNA Days until flower by Population", 
-        xlab = "Population", ylab = "days until flower")
+        xlab = "Population", ylab = "days until flower", cex.axis=0.25, las=2)
 
 boxplot(days_until_flower ~ seed_zone, data = ERNA.crop, main = "ERNA Days until flower by Seed Zone", 
-        xlab = "Seed Zones", ylab = "days until flower")
+        xlab = "Seed Zones", ylab = "days until flower", cex.axis=0.25, las=2)
 
 
 boxplot(length_cm_20220915 ~ Population*treatment,data=ERNA.crop, main="ERNA Plant Height by Population", 
         xlab="Population", ylab="Height(cm)",cex.axis=0.25, las=2)
 
 
-boxplot(length_cm_20220915 ~ seed_zone,data=ERNA, main="ERNA Plant Height by Seed Zone", 
+boxplot(length_cm_20220915 ~ seed_zone,data=ERNA, main="ERNA Plant Height by Seed Zone", col= myColors,
         xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.25, las=2)
+
+myColors <- ifelse(levels(ERNA.crop$seed_zone)=="15 - 20 Deg. F. / 3 - 6" , rgb(0.1,0.1,0.7,0.5) , 
+                   ifelse(levels(data$names)=="0 - 5 Deg. F. / 3 - 6", rgb(0.8,0.1,0.3,0.6),
+                          "grey90" ) )
+unique(ERNA.crop$seed_zone)
+# Build the plot
+boxplot(data$value ~ data$names , 
+        col=myColors , 
+        ylab="disease" , xlab="- variety -")
+
+# Add a legend
+legend("bottomleft", legend = c("Positiv control","Negativ control") , 
+       col = c(rgb(0.1,0.1,0.7,0.5) , rgb(0.8,0.1,0.3,0.6)) , bty = "n", pch=20 , pt.cex = 3, cex = 1, horiz = FALSE, inset = c(0.03, 0.1))
 
 boxplot(days_until_mortality ~ Population, data=ERNA, main = "ERNA Days until mortality by Population", 
         xlab = "Population",cex.axis=0.25, las=2, ylab = "Days until mortality")

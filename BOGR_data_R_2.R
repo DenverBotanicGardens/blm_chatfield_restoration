@@ -98,11 +98,10 @@ summary(survival_glm)
 str(BOGR)
 
 
-pop.list <- as.data.frame(unique(BOGR.crop$Population))
-pop.list
-colnames(pop.list) <- "Population"
-pop.list
-survival.pred <- predict(BOGR_survival_glm, BOGR.pop.list, se.fit = TRUE, type = "response", interval = "confidence" )
+BOGR.pop.list.df <- as.data.frame(unique(BOGR.crop$Population))
+colnames(BOGR.pop.list.df) <- "Population"
+
+survival.pred <- predict(BOGR_survival_glm, BOGR.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
 survival.pred
 survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 21)
 barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
