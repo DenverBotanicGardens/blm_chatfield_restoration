@@ -86,6 +86,8 @@ survival_glm <- glm(survival_20221108 ~ Population,
                     data = ERNA, family = binomial (link ="logit"))
 summary(survival_glm)
 
+str(pop.list)
+
 survival.pred <- predict(survival_glm, pop.list, se.fit = TRUE, type = "response", interval = "confidence" )
 survival.pred
 survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 20)
