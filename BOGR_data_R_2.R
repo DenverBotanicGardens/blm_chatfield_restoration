@@ -50,23 +50,23 @@ summary(days_mort_pop_an)
 days_mort_sz_an <- aov( days_until_mortality ~ seed_zone, data=BOGR.crop)
 summary(days_mort_pop_an)
 
-boxplot(days_until_flowering ~ Population, data = BOGR.crop, main = "BOGR Days until flower by Population", 
-        xlab = "Population", ylab = "days until flower")
+boxplot(days_until_flowering ~ Pop_code, data = BOGR.crop, main = "BOGR Days until flower by Population", 
+        xlab = "Population", ylab = "days until flower",cex.axis=0.5, las=2)
 
 boxplot(days_until_flowering ~ seed_zone, data = BOGR.crop, main = "BOGR Days until flower by Seed Zone", 
-        xlab = "Seed Zone", ylab = "days until flower")
+        xlab = "Seed Zone", ylab = "days until flower",cex.axis=0.25, las=2)
 
 
-boxplot(length_cm_20220801 ~ Population,data=BOGR, main="BOGR Plant Height by Population", 
-        xlab="Population", ylab="Height(cm)",cex.axis=0.25, las=2)
+boxplot(length_cm_20220801 ~ Pop_code,data=BOGR, main="BOGR Plant Height by Population", 
+        xlab="Population", ylab="Height(cm)",cex.axis=0.5, las=2)
  
 
 boxplot(length_cm_20220801 ~ seed_zone,data=BOGR, main="BOGR Plant Height by Seed Zone", 
-        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.25, las=2)
+        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.3, las=2)
 
-boxplot(num_inf_20220927 ~ Population, data = BOGR, 
+boxplot(num_inf_20220927 ~ Pop_code, data = BOGR, 
         main = "BOGR Number of Inflorescenses by Population", xlab = "Population", 
-        ylab = "Num of Inflorescenses",cex.axis=0.25, las=2 )
+        ylab = "Num of Inflorescenses",cex.axis=0.5, las=2 )
 
 hist(BOGR.crop$num_inf_20220927)
 
@@ -152,8 +152,8 @@ BOGR_ppt_inf_lm <- lmer(num_inf_20220927 ~ Ppt_Annual + (1|Block), data = BOGR.c
 plot(BOGR_ppt_inf_lm)
 
 
-plot(length_cm_20220801 ~ Ppt_Annual, data = BOGR.crop)
-plot(num_inf_20220927 ~ Ppt_Annual, data = BOGR.crop)
+boxplot(length_cm_20220801 ~ Ppt_Annual, data = BOGR.crop)
+boxplot(num_inf_20220927 ~ Ppt_Annual, data = BOGR.crop)
 
 
 #add elevation
