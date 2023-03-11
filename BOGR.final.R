@@ -4,6 +4,7 @@ BOGR.crop <- BOGR[1:1135,]
 BOGR.pop.list <- unique(as.character(BOGR.crop$Population))
 BOGR.pop.list.df <- as.data.frame(unique(BOGR.crop$Population))
 colnames(BOGR.pop.list.df) <- "Population"
+BOGR.pop.list
 
 library(car)
 library(lme4)
@@ -16,6 +17,7 @@ library(htmltools)
 library(dplyr)
 library(tidyr)
 library(effects)
+library(plotrix)
 
 #exclude data subset (e.g. replaced plants)
 BOGR.ex.rep <- BOGR.crop[BOGR.crop$replaced_Y_N !="Y",]
@@ -123,10 +125,12 @@ unique(BOGR_elev$Population)
 #add ht msd
 BOGR_ht_msd <- BOGR.crop %>%                            
   group_by(Population) %>%
-  summarise_at(vars(length_cm_20220801),
-               list(ht_mean = mean,
-                    ht_sd = sd), na.rm = TRUE) %>% 
+  summarise(ht_mean = mean(length_cm_20220801,na.rm = TRUE),
+            ht_sd = sd(length_cm_20220801,na.rm = TRUE),
+            n=n(), 
+            ht_se = ht_sd/sqrt(n)) %>% 
   as.data.frame(BOGR_ht_msd)
+
 
 BOGR_ht_msd <- left_join(BOGR_ht_msd, BOGR_precip, by = "Population" )
 BOGR_ht_msd <- left_join(BOGR_ht_msd, BOGR_temp, by = "Population" )
@@ -134,33 +138,72 @@ BOGR_ht_msd <- left_join(BOGR_ht_msd, BOGR_elev, by = "Population" )
 BOGR_ht_msd <- left_join(BOGR_ht_msd, BOGR_distance, by = "Population" )
 
 BOGR_ht_msd
-BOGR_ht_msd$Mean_MinWinter_Temp.x
-BOGR_temp$Population
 
 #ppt
-plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_Annual_Ppt, pch = 19, ylim = c(15,70),
+plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_Annual_Ppt, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source annual precipitation", xlab= "Mean annual precipitation (mm)", ylab = "Height (cm)")
 abline(v=443.7064, col="blue")
-arrows(BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_sd), BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_sd), length=0.05, angle = 90, code=3, lwd = .75)
+arrows(BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 
 #temp
-plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp, pch = 19, ylim = c(15,70),
+plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source minimum winter temperature", xlab= "Mean minimum winter temperature (C)", ylab = "Height (cm)")
 abline(v=-7.714918, col="blue")
-arrows(BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_sd), BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_sd), length=0.05, angle = 90, code=3, lwd = .75)
+arrows(BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 
 #elev
-plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$elevation, pch = 19, ylim = c(15,70),
+plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$elevation, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source elevation", xlab= "Elevation (m)", ylab = "Height (cm)")
 abline(v=5500, col="blue")
-arrows(BOGR_ht_msd$elevation, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_sd), BOGR_ht_msd$elevation, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_sd), length=0.05, angle = 90, code=3, lwd = .75)
+arrows(BOGR_ht_msd$elevation, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$elevation, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 
 #dist
-plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$sld_km, pch = 19, ylim = c(15,70),
+plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$sld_km, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source distance from CG", xlab= "Distance (km)", ylab = "Height (cm)")
 abline(v=0, col="blue")
-arrows(BOGR_ht_msd$sld_km, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_sd), BOGR_ht_msd$sld_km, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_sd), length=0.05, angle = 90, code=3, lwd = .75)
+arrows(BOGR_ht_msd$sld_km, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$sld_km, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 
+
+#add inf msd
+BOGR_inf_msd <- BOGR.crop %>%                            
+  group_by(Population) %>%
+  summarise(inf_mean = mean(num_inf_20220927,na.rm = TRUE),
+            inf_sd = sd(num_inf_20220927,na.rm = TRUE),
+            n=n(), 
+            inf_se = inf_sd/sqrt(n)) %>% 
+  as.data.frame(BOGR_inf_msd)
+
+
+BOGR_inf_msd <- left_join(BOGR_inf_msd, BOGR_precip, by = "Population" )
+BOGR_inf_msd <- left_join(BOGR_inf_msd, BOGR_temp, by = "Population" )
+BOGR_inf_msd <- left_join(BOGR_inf_msd, BOGR_elev, by = "Population" )
+BOGR_inf_msd <- left_join(BOGR_inf_msd, BOGR_distance, by = "Population" )
+
+BOGR_inf_msd
+
+#ppt
+plot(BOGR_inf_msd$inf_mean ~ BOGR_inf_msd$Mean_Annual_Ppt, pch = 19, ylim = c(0,100),
+     main = "BOGR population mean number of inflorescences by source annual precipitation", xlab= "Mean annual precipitation (mm)", ylab = "number of inflorescences")
+abline(v=443.7064, col="blue")
+arrows(BOGR_inf_msd$Mean_Annual_Ppt, (BOGR_inf_msd$inf_mean-BOGR_inf_msd$inf_se), BOGR_inf_msd$Mean_Annual_Ppt, (BOGR_inf_msd$inf_mean+BOGR_inf_msd$inf_se), length=0.05, angle = 90, code=3, lwd = .75)
+
+#temp
+plot(BOGR_inf_msd$inf_mean ~ BOGR_inf_msd$Mean_MinWinter_Temp, pch = 19, ylim = c(0,100),
+     main = "BOGR population mean number of inflorescences by source minimum winter temperature", xlab= "Mean minimum winter temperature (C)", ylab = "number of inflorescences")
+abline(v=-7.714918, col="blue")
+arrows(BOGR_inf_msd$Mean_MinWinter_Temp, (BOGR_inf_msd$inf_mean-BOGR_inf_msd$inf_se), BOGR_inf_msd$Mean_MinWinter_Temp, (BOGR_inf_msd$inf_mean+BOGR_inf_msd$inf_se), length=0.05, angle = 90, code=3, lwd = .75)
+
+#elev
+plot(BOGR_inf_msd$inf_mean ~ BOGR_inf_msd$elevation, pch = 19, ylim = c(0,100),
+     main = "BOGR population mean number of inflorescences by source elevation", xlab= "Elevation (m)", ylab = "number of inflorescences")
+abline(v=5500, col="blue")
+arrows(BOGR_inf_msd$elevation, (BOGR_inf_msd$inf_mean-BOGR_inf_msd$inf_se), BOGR_inf_msd$elevation, (BOGR_inf_msd$inf_mean+BOGR_inf_msd$inf_se), length=0.05, angle = 90, code=3, lwd = .75)
+
+#dist
+plot(BOGR_inf_msd$inf_mean ~ BOGR_inf_msd$sld_km, pch = 19, ylim = c(0,100),
+     main = "BOGR population mean number of inflorescences by source distance from CG", xlab= "Distance (km)", ylab = "number of inflorescences")
+abline(v=0, col="blue")
+arrows(BOGR_inf_msd$sld_km, (BOGR_inf_msd$inf_mean-BOGR_inf_msd$inf_se), BOGR_inf_msd$sld_km, (BOGR_inf_msd$inf_mean+BOGR_inf_msd$inf_se), length=0.05, angle = 90, code=3, lwd = .75)
 
 #rescale climate variables
 BOGR.crop$Ppt_Annual_Z <- (BOGR.crop$Ppt_Annual - mean(BOGR.crop$Ppt_Annual)) / sd(BOGR.crop$Ppt_Annual)
