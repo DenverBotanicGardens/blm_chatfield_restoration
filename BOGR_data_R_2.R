@@ -69,7 +69,7 @@ boxplot(num_inf_20220927 ~ Pop_code, data = BOGR,
         ylab = "Num of Inflorescenses",cex.axis=0.5, las=2 )
 
 hist(BOGR.crop$num_inf_20220927)
-
+unique(BOGR.crop$seed_zone)
 #infxseedzone
 compare_means(num_inf_20220927 ~ seed_zone, data = BOGR, method = "anova")
 boxplot(num_inf_20220927 ~ seed_zone, data = BOGR, 
