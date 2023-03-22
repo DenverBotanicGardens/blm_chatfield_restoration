@@ -55,27 +55,37 @@ BOGR.crop[ , 'dist_km'] <- NA
 for (dd in 1:length(BOGR.pop.list)) { 
   BOGR.crop$dist_km[grepl(BOGR.pop.list[dd], BOGR.crop$Population)] <- BOGR_distance$sld_km [dd] 
 }
-
+unique(BOGR.crop$Population)
+unique(BOGR.crop$dist_km)
+unique(BOGR_distance$Population)
 
 #emmeans comparisons
-BOGR.days.flower.lm <- lmer(days_until_flowering ~ Population + (1|Block), data=BOGR.crop)
-BOGR.days.flower.pair <- emmeans(BOGR.days.flower.lm, specs = pairwise ~ Population)
-pair(BOGR.days.flower.pair)
-as.data.frame(BOGR.days.flower.pair)
+BOGR.days.flower.lm <- lmer(log(days_until_flowering) ~ Pop_code + (1|Block), data=BOGR.crop)
+BOGR.days.flower.pair <- emmeans(BOGR.days.flower.lm, specs = pairwise ~ Pop_code)
+plot(BOGR.days.flower.pair, comparisons = TRUE, xlab = " EMM Days until flowering", ylab = "Population")
+
+BOGR.days.flower.sz.lm <- lmer(log(days_until_flowering) ~ seed_zone_code + (1|Block), data=BOGR.crop)
+BOGR.days.flower.sz.pair <- emmeans(BOGR.days.flower.sz.lm, specs = pairwise ~ seed_zone_code)
+plot(BOGR.days.flower.sz.pair, comparisons = TRUE, xlab = " EMM Days until flowering", ylab = "Seed Zone")
 
 BOGR.ht.pop.lm <- lmer(log(length_cm_20220801) ~ Population + (1|Block), data = BOGR.crop)
 BOGR.pair.ht.pop.lm <- emmeans(BOGR.ht.pop.lm, specs = pairwise ~ Population)
-summary(BOGR.pair.ht.pop.lm)
+plot(BOGR.pair.ht.pop.lm, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Population")
 
-BOGR.ht.sz.lm <- lmer(log(length_cm_20220801) ~ seed_zone + (1|Block), data = BOGR.crop)
-BOGR.pair.ht.sz.lm <- emmeans(BOGR.ht.sz.lm, specs = pairwise ~ seed_zone)
+summary(BOGR.pair.ht.pop.lm)
+str(BOGR.crop$Pop_code)
+
+BOGR.ht.sz.lm <- lmer(log(length_cm_20220801) ~ seed_zone_code + (1|Block), data = BOGR.crop)
+BOGR.pair.ht.sz.lm <- emmeans(BOGR.ht.sz.lm, specs = pairwise ~ seed_zone_code)
+plot(BOGR.pair.ht.sz.lm, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Seed Zone")
 summary(BOGR.pair.ht.sz.lm)
 
 BOGR.inf.days.pop.lm
 
-BOGR_inf_glm <- glmer( num_inf_20220927 ~ Population + (1|Block), 
+BOGR_inf_glm <- glmer( num_inf_20220927 ~ Pop_code + (1|Block), 
                        data = BOGR.crop, family = poisson (link ="log"))
-BOGR_pair_inf <- emmeans(BOGR_inf_glm, specs = pairwise ~ Population)
+BOGR_pair_inf <- emmeans(BOGR_inf_glm, specs = pairwise ~ Pop_code)
+plot(BOGR_pair_inf, comparisons = TRUE, xlab = " EMM Number of Inflourescences", ylab = "Population")
 summary(BOGR_pair_inf)
 
 BOGR_inf_sz_glm <- glmer( num_inf_20220927 ~ seed_zone + (1|Block), 
@@ -86,9 +96,6 @@ summary(BOGR_pair_sz_inf)
 plot(num_inf_20220927 ~ length_cm_20220801, data = BOGR.crop, main = "BOGR number of inf x height")
 abline(lm(num_inf_20220927 ~ length_cm_20220801, data = BOGR.crop))
 
-#emmeans table
-
-unique(BOGR.crop$Population)
 
 #flowering proportion
 BOGR.flower.prop <- BOGR.crop %>% group_by(Population) %>% summarise(BOGR.flowering.prop=sum(flowering_Y_N_20220927, na.rm = TRUE)) %>% print(n=21)
@@ -100,6 +107,9 @@ unique(BOGR.crop$Population)
 
 BOGR_flower_glm <- glm(flowering_Y_N_20220927 ~ Population, 
                   data = BOGR.crop, family = binomial (link ="logit"))
+BOGR_flower_pair <- emmeans(BOGR_flower_glm, specs = pairwise ~ Population)
+plot(BOGR_flower_pair, comparisons = TRUE, xlab = " EMM Flowering rate", ylab = "Population", xlim = c(-2,2))
+
 BOGR.flower.pred <- predict(BOGR_flower_glm, BOGR.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
 BOGR.flower.pred
 BOGR_flower_mat <- matrix(data = BOGR.flower.pred$fit, nrow = 1, ncol = 21)
@@ -147,18 +157,33 @@ BOGR_ht_msd
 #ppt
 plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_Annual_Ppt, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source annual precipitation", xlab= "Mean annual precipitation (mm)", ylab = "Height (cm)")
-abline(v=443.7064, col="blue")
+abline(v=443.7064, col="red")
 arrows(BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$Mean_Annual_Ppt, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
+BOGR_ht_msd$Mean_Annual_Ppt2 <- BOGR_ht_msd$Mean_Annual_Ppt^2
+summary(lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_Annual_Ppt + BOGR_ht_msd$Mean_Annual_Ppt2))
 summary(lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_Annual_Ppt))
 
 #temp
 plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp, pch = 19, ylim = c(10,30),
-     main = "BOGR population mean height by source minimum winter temperature", xlab= "Mean minimum winter temperature (C)", ylab = "Height (cm)")
-abline(v=-7.714918, col="blue")
+     main = "B. gracilis height by source minimum winter temperature", xlab= "Mean minimum winter temperature (C)", ylab = "Height (cm)")
+lines(BOGR_ht_msd$ht_mean[order(BOGR_ht_msd$ht_mean)], predict(BOGR.ht.temp.msd.lm, interval = "confidence")[, "lwr"][order(BOGR_ht_msd$ht_mean)]);  
+lines(BOGR_ht_msd$ht_mean[order(BOGR_ht_msd$ht_mean)], predict(BOGR.ht.temp.msd.lm, interval = "confidence")[, "upr"][order(BOGR_ht_msd$ht_mean)])
 arrows(BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean-BOGR_ht_msd$ht_se), BOGR_ht_msd$Mean_MinWinter_Temp, (BOGR_ht_msd$ht_mean+BOGR_ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 
-summary(lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp))
+ggplot(data = BOGR_ht_msd, aes(y=ht_mean, x=Mean_MinWinter_Temp)) +
+  geom_point() +
+  geom_smooth(method="lm", color="red", fill = "blue") +
+  geom_errorbar(aes(ymin=ht_mean-ht_se, ymax=ht_mean+ht_se), width=.2)
+                                                                  
 
+BOGR_ht_msd$Mean_MinWinter_Temp2 <- BOGR_ht_msd$Mean_MinWinter_Temp^2
+BOGR.ht.temp.msd.lm <- lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp)
+summary(lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp))
+summary(lm(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$Mean_MinWinter_Temp + BOGR_ht_msd$Mean_MinWinter_Temp2))
+
+summary(BOGR.crop$days_until_flowering)
+ 
+abline(v=-7.714918, col="red" + BOGR_ht_msd, ht_mean ~ Mean_MinWinter_Temp)
 #elev
 plot(BOGR_ht_msd$ht_mean ~ BOGR_ht_msd$elevation, pch = 19, ylim = c(10,30),
      main = "BOGR population mean height by source elevation", xlab= "Elevation (ft)", ylab = "Height (cm)")
@@ -231,13 +256,18 @@ BOGR.crop$min_wint_temp_chat <- (BOGR.crop$min_wint_temp - (-7.714918)) / sd(BOG
 BOGR.crop$elev_chat <- (BOGR.crop$elev - 5500) / sd(BOGR.crop$elev)
 BOGR.crop$dist_km_chat <- (BOGR.crop$dist_km - .0034) / sd(BOGR.crop$dist_km)
 
+#squared climate variables
+BOGR.crop$Ppt_Annual_Z2 <- BOGR.crop$Ppt_Annual_Z^2
+BOGR.crop$min_wint_temp_Z2 <- BOGR.crop$min_wint_temp_Z^2
+BOGR.crop$elev_Z2 <- BOGR.crop$elev_Z^2
+
 #correlation between climate variables
 plot(min_wint_temp ~ elev, data = BOGR.crop) #correlated?
 plot(Ppt_Annual ~ min_wint_temp, data = BOGR.crop)
 plot(elev ~ dist_km, data = BOGR.crop)
 
 #AIC survival - warning "boundary (singular) fit: see help('isSingular')"
-BOGR.climate.lm <- glmer(survival_20220927 ~ Ppt_Annual_Z+ min_wint_temp_Z + elev_Z + dist_km_Z + (1|Block), data = BOGR.crop,family = binomial (link ="logit"))
+BOGR.climate.lm <- glmer(survival_20220927 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + elev_Z + dist_km_Z + (1|Block), data = BOGR.crop,family = binomial (link ="logit"))
 BOGR.temp.precip.lm <- glmer(survival_20220927 ~ Ppt_Annual_Z+ min_wint_temp_Z + (1|Block), data = BOGR.crop,family = binomial (link ="logit"))
 BOGR_ppt_lm <- glmer(survival_20220927 ~ Ppt_Annual_Z + (1|Block), data = BOGR.crop,family = binomial (link ="logit"))
 BOGR_temp_lm <- glmer(survival_20220927 ~ min_wint_temp_Z + (1|Block), data = BOGR.crop,family = binomial (link ="logit"))
@@ -246,27 +276,24 @@ BOGR_dist_lm <- glmer(survival_20220927 ~ dist_km_Z + (1|Block), data = BOGR.cro
 
 
 #AIC models ~ ht
-
-BOGR.temp.precip.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual_Z+ min_wint_temp_Z + (1|Block), data = BOGR.crop)
-BOGR_ppt_lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual_Z + (1|Block), data = BOGR.crop)
-BOGR_temp_lm <- lmer(log(length_cm_20220801) ~ min_wint_temp_Z + (1|Block), data = BOGR.crop)
-BOGR_elev_lm <- lmer(log(length_cm_20220801) ~ elev_Z + (1|Block), data = BOGR.crop)
+BOGR.temp.precip.lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop)
+BOGR_ppt_lm <- lmer(log(length_cm_20220801) ~ Ppt_Annual_Z + Ppt_Annual_Z2 + (1|Block), data = BOGR.crop)
+BOGR_temp_lm <- lmer(log(length_cm_20220801) ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop)
+BOGR_elev_lm <- lmer(log(length_cm_20220801) ~ elev_Z + elev_Z2 + (1|Block), data = BOGR.crop)
 BOGR_dist_lm <- lmer(log(length_cm_20220801) ~ dist_km_Z + (1|Block), data = BOGR.crop)
 
-r.squaredGLMM(BOGR.temp.precip.lm)
 
 models <- list( BOGR.temp.precip.lm, BOGR_ppt_lm, BOGR_temp_lm, BOGR_elev_lm, BOGR_dist_lm)
 mod.names <- c('temp.ppt', 'ppt','temp', 'elev', 'dist')
 aic.sum <- aictab(cand.set = models, modnames = mod.names )
 aic.sum
-plot(aic.sum)
+
 
 #AIC models ~inf
-
-BOGR.inf.temp.precip.lm <- glmer( num_inf_20220927 ~ Ppt_Annual_Z + min_wint_temp_Z + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
-BOGR.inf.temp.lm <- glmer( num_inf_20220927 ~ min_wint_temp_Z + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
-BOGR.inf.ppt.lm <- glmer( num_inf_20220927 ~ Ppt_Annual_Z + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
-BOGR.inf.elev.lm <- glmer( num_inf_20220927~ elev_Z + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
+BOGR.inf.temp.precip.lm <- glmer( num_inf_20220927 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
+BOGR.inf.temp.lm <- glmer( num_inf_20220927 ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
+BOGR.inf.ppt.lm <- glmer( num_inf_20220927 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
+BOGR.inf.elev.lm <- glmer( num_inf_20220927~ elev_Z + elev_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
 BOGR.inf.dist.lm <- glmer( num_inf_20220927~ dist_km_Z + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
 
 AIC(BOGR.inf.temp.precip.lm)
@@ -275,20 +302,12 @@ AIC(BOGR.inf.ppt.lm)
 AIC(BOGR.inf.elev.lm) 
 AIC(BOGR.inf.dist.lm) 
 
-
 #AIC models ~ days until flowering
-BOGR.duf.climate.lm <- lmer(days_until_flowering ~ Ppt_Annual_Z+ min_wint_temp_Z + elev_Z + dist_km_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.temp.precip.lm <- lmer(days_until_flowering ~ Ppt_Annual_Z+ min_wint_temp_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.ppt.elev.lm <- lmer(days_until_flowering ~ Ppt_Annual_Z+ elev_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.temp.elev.lm <- lmer(days_until_flowering ~ elev_Z + min_wint_temp_Z + (1|Block), data = BOGR.crop)
-BOGR_duf_ppt_lm <- lmer(days_until_flowering ~ Ppt_Annual_Z + (1|Block), data = BOGR.crop)
-BOGR_duf_temp_lm <- lmer(days_until_flowering ~ min_wint_temp_Z + (1|Block), data = BOGR.crop)
-BOGR_duf_elev_lm <- lmer(days_until_flowering ~ elev_Z + (1|Block), data = BOGR.crop)
-BOGR_duf_dist_lm <- lmer(days_until_flowering ~ dist_km_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.dist.ppt <- lmer(days_until_flowering ~ Ppt_Annual_Z+  dist_km_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.dist.elev <- lmer(days_until_flowering ~ elev_Z + dist_km_Z + (1|Block), data = BOGR.crop)
-BOGR.duf.dist.temp <- lmer(days_until_flowering ~ dist_km_Z + min_wint_temp_Z + (1|Block), data= BOGR.crop)
-BOGR.duf.dist.ppt.elev <- lmer(days_until_flowering ~ dist_km_Z+ Ppt_Annual_Z + elev_Z + (1|Block), data=BOGR.crop)
+BOGR.duf.temp.precip.lm <- glmer.nb(days_until_flowering ~ Ppt_Annual_Z+ min_wint_temp_Z + (1|Block), data = BOGR.crop)
+BOGR_duf_ppt_lm <- glmer.nb(days_until_flowering ~ Ppt_Annual_Z + (1|Block), data = BOGR.crop)
+BOGR_duf_temp_lm <- glmer.nb(days_until_flowering ~ min_wint_temp_Z + (1|Block), data = BOGR.crop)
+BOGR_duf_elev_lm <- glmer.nb(days_until_flowering ~ elev_Z + (1|Block), data = BOGR.crop)
+BOGR_duf_dist_lm <- glmer.nb(days_until_flowering ~ dist_km_Z + (1|Block), data = BOGR.crop)
 
 models <- list(BOGR.duf.climate.lm, BOGR.duf.temp.precip.lm, BOGR.duf.ppt.elev.lm, BOGR.duf.temp.elev.lm, BOGR_duf_ppt_lm, BOGR_duf_temp_lm, BOGR_duf_elev_lm, BOGR_dist_lm,
                BOGR.dist.ppt, BOGR.dist.elev, BOGR.dist.temp, BOGR.dist.ppt.elev)
@@ -326,3 +345,4 @@ AIC(BOGR.temp_lm)
 AIC(BOGR.dist_lm)
 AIC(BOGR.dist.elev)
 
+plot(BOGR.crop$length_cm_20220915 ~ BOGR.crop$elev_Z)

@@ -51,30 +51,30 @@ days_mort_sz_an <- aov( days_until_mortality ~ seed_zone, data=BOGR.crop)
 summary(days_mort_pop_an)
 
 boxplot(days_until_flowering ~ Pop_code, data = BOGR.crop, main = "BOGR Days until flower by Population", 
-        xlab = "Population", ylab = "days until flower",cex.axis=0.5, las=2)
+        xlab = "Population", ylab = "days until flower",cex.axis=0.6, las=2)
 
-boxplot(days_until_flowering ~ seed_zone, data = BOGR.crop, main = "BOGR Days until flower by Seed Zone", 
-        xlab = "Seed Zone", ylab = "days until flower",cex.axis=0.25, las=2)
+boxplot(days_until_flowering ~ seed_zone_code, data = BOGR.crop, main = "BOGR Days until flower by Seed Zone", 
+        xlab = "Seed Zone", ylab = "days until flower",cex.axis=0.6, las=2)
 
 
 boxplot(length_cm_20220801 ~ Pop_code,data=BOGR, main="BOGR Plant Height by Population", 
-        xlab="Population", ylab="Height(cm)",cex.axis=0.5, las=2)
+        xlab="Population", ylab="Height(cm)",cex.axis=0.6, las=2)
  
 
-boxplot(length_cm_20220801 ~ seed_zone,data=BOGR, main="BOGR Plant Height by Seed Zone", 
-        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.3, las=2)
+boxplot(length_cm_20220801 ~ seed_zone_code,data=BOGR, main="BOGR Plant Height by Seed Zone", 
+        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.6, las=2)
 
 boxplot(num_inf_20220927 ~ Pop_code, data = BOGR, 
         main = "BOGR Number of Inflorescenses by Population", xlab = "Population", 
-        ylab = "Num of Inflorescenses",cex.axis=0.5, las=2 )
+        ylab = "Num of Inflorescenses",cex.axis=0.6, las=2 )
 
 hist(BOGR.crop$num_inf_20220927)
 unique(BOGR.crop$seed_zone)
 #infxseedzone
 compare_means(num_inf_20220927 ~ seed_zone, data = BOGR, method = "anova")
-boxplot(num_inf_20220927 ~ seed_zone, data = BOGR, 
+boxplot(num_inf_20220927 ~ seed_zone_code, data = BOGR, 
         main = "BOGR Number of Inflorescenses by Seed Zone", xlab = "Seed Zone", 
-        ylab = "Num of Inflorescenses",cex.axis=0.25, las=2 ) 
+        ylab = "Num of Inflorescenses",cex.axis=0.6, las=2 ) 
 
 boxplot(days_until_mortality ~ Population, data=BOGR, main = "BOGR Days until mortality by Population", 
         xlab = "Population",cex.axis=0.25, las=2, ylab = "Days until mortality")

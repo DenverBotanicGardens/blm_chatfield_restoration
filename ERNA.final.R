@@ -60,6 +60,12 @@ for (dd in 1:length(ERNA.pop.list)) {
 }
 
 unique(ERNA.crop$seed_zone)
+
+#squared msd climate values
+ht_msd$Mean_Annual_Ppt2 <- ht_msd$Mean_Annual_Ppt^2
+ht_msd$Mean_MinWinter_Temp2 <- ht_msd$Mean_MinWinter_Temp^2
+ht_msd$elev2 <- ht_msd$elevation^2
+
 #add ht means and sd
 
 ht_msd <- ERNA.crop %>%                            
@@ -83,6 +89,7 @@ plot(ht_msd$ht_mean ~ ht_msd$Mean_Annual_Ppt, pch = 19, ylim = c(20,60),
      main = "ERNA population mean height by source annual precipitation", xlab= "Mean annual precipitation (mm)", ylab = "Height (cm)")
 abline(v=443.7064, col="blue")
 arrows(ht_msd$Mean_Annual_Ppt, (ht_msd$ht_mean-ht_msd$ht_se), ht_msd$Mean_Annual_Ppt, (ht_msd$ht_mean+ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
+summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_Annual_Ppt + ht_msd$Mean_Annual_Ppt2))
 summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_Annual_Ppt))
 
 #temp
@@ -91,6 +98,7 @@ plot(ht_msd$ht_mean ~ ht_msd$Mean_MinWinter_Temp, pch = 19, ylim = c(20,60),
 abline(v=-7.714918, col="blue")
 arrows(ht_msd$Mean_MinWinter_Temp, (ht_msd$ht_mean-ht_msd$ht_se), ht_msd$Mean_MinWinter_Temp, (ht_msd$ht_mean+ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_MinWinter_Temp))
+summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_MinWinter_Temp + ht_msd$Mean_MinWinter_Temp2))
 
 #elev
 plot(ht_msd$ht_mean ~ ht_msd$elevation, pch = 19, ylim = c(20,60),
@@ -98,6 +106,7 @@ plot(ht_msd$ht_mean ~ ht_msd$elevation, pch = 19, ylim = c(20,60),
 abline(v=5500, col="blue")
 arrows(ht_msd$elevation, (ht_msd$ht_mean-ht_msd$ht_se), ht_msd$elevation, (ht_msd$ht_mean+ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 summary(lm(ht_msd$ht_mean ~ ht_msd$elevation))
+summary(lm(ht_msd$ht_mean ~ ht_msd$elevation + ht_msd$elev2))
 
 #dist
 plot(ht_msd$ht_mean ~ ht_msd$sld_km, pch = 19, ylim = c(20,60),
@@ -108,8 +117,9 @@ summary(lm(ht_msd$ht_mean ~ ht_msd$sld_km))
 
 #emmeans tests
 
-ht_sz_lm <- lmer(log(length_cm_20220915) ~ seed_zone + (1|block), data = ERNA.crop)
-pair.ht.sz.lm <- emmeans(ht_sz_lm, specs = pairwise ~ seed_zone)
+ht_sz_lm <- lmer(log(length_cm_20220915) ~ seed_zone_ID + (1|block), data = ERNA.crop)
+pair.ht.sz.lm <- emmeans(ht_sz_lm, specs = pairwise ~ seed_zone_ID)
+plot(pair.ht.sz.lm, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Seed Zone")
 ht.sz.ratio <- pairs(pair.ht.sz.lm, type = "response") 
 as.data.frame(ht.sz.ratio)
 pair.ht.sz.lm
@@ -126,11 +136,10 @@ survival_glm <- glm(survival_20221108 ~ Population,
                     data = ERNA, family = binomial (link ="logit"))
 survival_pair <- emmeans(survival_glm, specs = pair)
 
-#odds ratio heat map
-
-
-palette = colorRampPalette(c("green", "white", "red")) (20)
-heatmap(x = mydata.cor, col = palette, symm = TRUE)
+#emmeans plot
+ht_pop_lm <- lmer(log(length_cm_20220915) ~ Pop_ID + (1|block), data = ERNA.crop)
+pair.ht.pop <- emmeans(ht_pop_lm, specs = pairwise ~ Pop_ID)
+plot(pair.ht.pop, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Population")
 
 days_mort_pop_an <- aov( days_until_mortality ~ Population, data=ERNA)
 summary(days_mort_pop_an)
@@ -146,8 +155,11 @@ ERNA.crop %>%
   tally()
 
 
-flower_glm <- glm(flowering_Y_N_20221108 ~ Population, 
+flower_glm <- glm(flowering_Y_N_20221108 ~ Pop_ID, 
                     data = ERNA.crop, family = binomial (link ="logit"))
+flower_glm_pair <- emmeans(flower_glm, specs = pairwise ~ Pop_ID)
+plot(flower_glm_pair, comparisons = TRUE, xlab = " EMM Flowering rate", ylab = "Population")
+
 flower.pred <- predict(flower_glm, ERNA.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
 flower.pred
 flower_mat <- matrix(data = flower.pred$fit, nrow = 1, ncol = 20)
@@ -161,8 +173,11 @@ survival.prop
 ERNA.crop %>%
   group_by(Population) %>%
   tally()
-survival_glm <- glm(survival_20221108 ~ Population, 
+survival_glm <- glm(survival_20221108 ~ Pop_ID, 
                     data = ERNA.crop, family = binomial (link ="logit"))
+summary(survival_glm)
+survival_pair <- emmeans(survival.pred, specs = pairwise ~ Pop_ID)
+plot(survival_glm_pair, comparisons = TRUE, xlab = " EMM survival rate", ylab = "Population")
 
 survival.pred <- predict(survival_glm, ERNA.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
 survival.pred
@@ -171,6 +186,7 @@ survival_mat
 survival_se <- matrix(data = survival.pred$se.fit, nrow = 1, ncol = 20)
 survival_se
 barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
+survival_df <- as.data.frame(survival_mat)
 
 #re-scale climate variables
 
@@ -183,7 +199,12 @@ ERNA.crop$dist_km_Z <- (ERNA.crop$dist_km - mean(ERNA.crop$dist_km)) / sd(ERNA.c
 ERNA.crop$Ppt_Annual_chat <- (ERNA.crop$Ppt_Annual - 443.7064) / sd(ERNA.crop$Ppt_Annual)
 ERNA.crop$min_wint_temp_chat <- (ERNA.crop$min_wint_temp - (-7.714918)) / sd(ERNA.crop$min_wint_temp)
 ERNA.crop$elev_chat <- (ERNA.crop$elev - 5500) / sd(ERNA.crop$elev)
-ERNA.crop$dist_km_chat <- (ERNA.crop$dist_km - .0034) / sd(ERNA.crop$dist_km)
+ERNA.crop$dist_km_chat <- (ERNA.crop$dist_km) / sd(ERNA.crop$dist_km)
+
+#squared climate values
+ERNA.crop$Ppt_Annual_Z2 <- ERNA.crop$Ppt_Annual_Z^2
+ERNA.crop$min_wint_temp_Z2 <- ERNA.crop$min_wint_temp_Z^2
+ERNA.crop$elev_Z2 <- ERNA.crop$elev_Z^2
 
 #correlation between climate variables
 plot(min_wint_temp ~ elev, data = ERNA.crop) #correlated?
@@ -191,10 +212,10 @@ plot(Ppt_Annual ~ min_wint_temp, data = ERNA.crop)
 plot(elev ~ dist_km, data = ERNA.crop)
 
 #AIC for height
-ht.temp.precip.lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + min_wint_temp_Z + (1|block), data = ERNA.crop)
-ht.ppt_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + (1|block), data = ERNA.crop)
-ht.elev_lm <- lmer(log(length_cm_20220915) ~ elev_Z + (1|block), data = ERNA.crop)
-ht.temp_lm <- lmer(log(length_cm_20220915) ~ min_wint_temp_Z + (1|block), data = ERNA.crop)
+ht.temp.precip.lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop)
+ht.ppt_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_Z + Ppt_Annual_Z2 + (1|block), data = ERNA.crop)
+ht.elev_lm <- lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop)
+ht.temp_lm <- lmer(log(length_cm_20220915) ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop)
 ht.dist_lm <- lmer(log(length_cm_20220915) ~ dist_km_Z + (1|block), data = ERNA.crop)
 
 
@@ -202,16 +223,33 @@ models <- list(ht.temp.precip.lm, ht.ppt_lm, ht.elev_lm, ht.temp_lm, ht.dist_lm)
 mod.names <- c('temp.precip','ppt', 'elev', 'temp', 'dist')
 aictab(cand.set = models, modnames = mod.names)
 
+plot(allEffects(ht.elev_lm), main = "Effect of Elevation on ERNA height", xlab = 
+      "Elevation(adjusted)", ylab = "Height (cm) logged")
+
+ht.tx <- lmer(log(length_cm_20220915) ~ Population + treatment + (1|block), data = ERNA.crop)
+ht.pop <- lmer(log(length_cm_20220915) ~ Population +  (1|block), data = ERNA.crop)
+models <- list(ht.tx, ht.pop)
+mod.names <- c('Pop.tx', 'Pop')
+aictab(cand.set = models, modnames = mod.names )
+
 #AIC for survival
-sv.temp.precip.lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ppt_lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.elev_lm <- glmer(survival_20221108 ~ elev_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.temp_lm <- glmer(survival_20221108 ~ min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.temp.precip.lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.ppt_lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.elev_lm <- glmer(survival_20221108 ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.temp_lm <- glmer(survival_20221108 ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 sv.dist_lm <- glmer(survival_20221108 ~ dist_km_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 
-
+allEffects(sv.dist_lm), main = "Effect of Distance on ERNA survival", xlab = 
+       "Distance(adjusted)", ylab = "survival rate")
+predictorEffect(sv.dist_lm)
 models <- list(sv.temp.precip.lm, sv.ppt_lm, sv.elev_lm, sv.temp_lm, sv.dist_lm)
 mod.names <- c('temp.ppt', 'ppt', 'elev', 'temp', 'dist')
+aictab(cand.set = models, modnames = mod.names )
+
+sv.tx <- glmer(survival_20221108 ~ Population + treatment + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.pop <- glmer(survival_20221108 ~ Population +  (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+models <- list(sv.tx, sv.pop)
+mod.names <- c('Pop.tx', 'Pop')
 aictab(cand.set = models, modnames = mod.names )
 
 #AIC aim 2 chatfield difference
@@ -221,7 +259,7 @@ ht.ch.ppt_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_chat + (1|block), data
 ht.ch.elev_lm <- lmer(log(length_cm_20220915) ~ elev_chat + (1|block), data = ERNA.crop)
 ht.ch.temp_lm <- lmer(log(length_cm_20220915) ~ min_wint_temp_chat + (1|block), data = ERNA.crop)
 ht.ch.dist_lm <- lmer(log(length_cm_20220915) ~ dist_km_chat + (1|block), data = ERNA.crop)
-
+summary(ht.ch.ppt_lm )
 ht.ch.dist.elev <- lmer(log(length_cm_20220915) ~ elev_chat + dist_km_chat + (1|block), data = ERNA.crop)
 
 models <- list(ht.ch.climate_lm,ht.ch.temp.precip.lm,ht.ch.ppt_lm, ht.ch.elev_lm, ht.ch.temp_lm, ht.ch.dist_lm, ht.ch.dist.elev)
@@ -257,7 +295,7 @@ ht_msd <- ERNA.crop %>%
         
 ht_msd
 
-
+plot(Ppt_Annual_Z ~ Ppt_Annual_chat, data = ERNA.crop)
 
 plot(ht_msd$Population ~ ERNA.crop$dist_km)
 mean(ERNA.crop$length_cm_20220915)
