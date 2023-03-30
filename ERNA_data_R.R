@@ -66,13 +66,13 @@ boxplot(days_until_flower ~ Pop_ID, data = ERNA.crop, main = "ERNA Days until fl
 boxplot(days_until_flower ~ seed_zone, data = ERNA.crop, main = "ERNA Days until flower by Seed Zone", 
         xlab = "Seed Zones", ylab = "days until flower", cex.axis=0.25, las=2)
 
-pop_order <- with(ERNA.crop, reorder(Pop_ID, length_cm_20220915, median))
-boxplot(length_cm_20220915 ~ pop_order ,data=ERNA.crop, main="E. nauseosa Height by Population", 
-        xlab="Population", ylab="Height(cm)",cex.axis=0.6, las=2)
+pop_order <- with(ERNA.crop, reorder(Pop_ID, length_cm_20220915, median, na.rm = T))
+boxplot(length_cm_20220915 ~ pop_order ,data=ERNA.crop, main="E. nauseosa Height x Population", 
+        xlab="Population", ylab="Height(cm)", col = "cadetblue1",cex.axis=0.6, las=2)
 
-
-boxplot(length_cm_20220915 ~ seed_zone_ID,data=ERNA, main="E. nauseosa Height by Seed Zone", 
-        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.6, las=2)
+sz_order <- with(ERNA.crop, reorder(seed_zone, length_cm_20220915, median, na.rm = T))
+boxplot(length_cm_20220915 ~ sz_order,data=ERNA, main="E. nauseosa Height x Seed Zone", 
+        xlab="Seed Zone", ylab="Height(cm)",col="chartreuse", cex.axis=0.4, las=2)
 
 
 survival_glm <- glm(survival_20221108 ~ Population, 

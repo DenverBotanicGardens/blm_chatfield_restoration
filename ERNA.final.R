@@ -123,7 +123,7 @@ summary(lm(ERNA_rates$Flower_Rate ~ ERNA_rates$Mean_Annual_Ppt + ERNA_rates$Mean
 
 ggplot(data = ERNA_rates, aes(y=Flower_Rate, x=Mean_MinWinter_Temp)) +
   geom_point() +
-  stat_smooth(method="lm", formula = y ~ x + I(x^2), color="blue", fill = "blue") +
+  stat_smooth(method="lm", formula = y ~ ploy(x, 2), color="blue", fill = "blue") +
   geom_errorbar(aes(ymin=Flower_Rate-Standard_Error_fl, ymax=Flower_Rate+Standard_Error_fl), width=.2)
 
 #elev

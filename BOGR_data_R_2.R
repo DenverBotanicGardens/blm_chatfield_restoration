@@ -1,4 +1,5 @@
 BOGR <- read.csv(file = 'BOGR_data.csv') 
+
 BOGR.crop <- BOGR[1:1135,]
 
 
@@ -50,23 +51,25 @@ summary(days_mort_pop_an)
 days_mort_sz_an <- aov( days_until_mortality ~ seed_zone, data=BOGR.crop)
 summary(days_mort_pop_an)
 
-boxplot(days_until_flowering ~ Pop_code, data = BOGR.crop, main = "BOGR Days until flower by Population", 
-        xlab = "Population", ylab = "days until flower",cex.axis=0.6, las=2)
+new_order_duf <- with(BOGR.crop, reorder(Pop_code, days_until_flowering, median,  na.rm=T))
+boxplot(days_until_flowering ~ new_order_duf, data = BOGR.crop, main = "B.gracilis flowering time x Population", 
+        xlab = "Population", ylab = "days until flower",col = "cadetblue1", cex.axis=0.6, las=2)
 
-boxplot(days_until_flowering ~ seed_zone_code, data = BOGR.crop, main = "BOGR Days until flower by Seed Zone", 
-        xlab = "Seed Zone", ylab = "days until flower",cex.axis=0.6, las=2)
+new_order_sz_duf <- with(BOGR.crop, reorder(seed_zone, days_until_flowering, median,  na.rm=T))
+boxplot(days_until_flowering ~ new_order_sz_duf, data = BOGR.crop, main = "B.gracilis flowering time x Seed Zone", 
+         ylab = "days until flower", xlab= "",col = "chartreuse", cex.axis=0.4, las=2)
 
+new_order <- with(BOGR.crop, reorder(Population, length_cm_20220801, median,  na.rm=T))
+boxplot(length_cm_20220801 ~ new_order,data=BOGR.crop, main="B. gracilis Height x Population", 
+        xlab="Population", ylab="Height(cm)",col = "cadetblue1", cex.axis=0.6, las=2)
 
-boxplot(length_cm_20220801 ~ Pop_code,data=BOGR, main="BOGR Plant Height by Population", 
-        xlab="Population", ylab="Height(cm)",cex.axis=0.6, las=2)
- 
+new_order_sz <- with(BOGR.crop, reorder(seed_zone, length_cm_20220801, median,  na.rm=T)) 
+boxplot(length_cm_20220801 ~ new_order_sz,data=BOGR, main="B. gracilis Height x Seed Zone", 
+        xlab="", ylab="Height(cm)",col = "chartreuse", cex.axis=0.4, las=2)
 
-boxplot(length_cm_20220801 ~ seed_zone_code,data=BOGR, main="BOGR Plant Height by Seed Zone", 
-        xlab="Seed Zone", ylab="Height(cm)", cex.axis=0.6, las=2)
-
-boxplot(num_inf_20220927 ~ Pop_code, data = BOGR, 
+boxplot(num_inf_20220927 ~ new_order, data = BOGR.crop, 
         main = "BOGR Number of Inflorescenses by Population", xlab = "Population", 
-        ylab = "Num of Inflorescenses",cex.axis=0.6, las=2 )
+        ylab = "Num of Inflorescenses",col = "cadetblue1", cex.axis=0.6, las=2 )
 
 hist(BOGR.crop$num_inf_20220927)
 unique(BOGR.crop$seed_zone)

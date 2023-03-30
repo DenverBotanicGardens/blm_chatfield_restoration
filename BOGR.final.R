@@ -18,6 +18,7 @@ library(dplyr)
 library(tidyr)
 library(effects)
 library(plotrix)
+library(ggplot2)
 
 #exclude data subset (e.g. replaced plants)
 BOGR.ex.rep <- BOGR.crop[BOGR.crop$replaced_Y_N !="Y",]
@@ -436,7 +437,8 @@ mod.names <- c('temp.ppt2', 'ppt','temp2', 'elev2', 'dist2', 'temp.ppt', 'ppt','
 aic.sum <- aictab(cand.set = models, modnames = mod.names )
 aic.sum
 
-
+BOGR.height <- lmer(log(length_cm_20220801) ~ Ppt_Annual_Z  + min_wint_temp_Z  + elev_Z + dist_km_Z + (1|Block), data = BOGR.crop)
+summary(BOGR.height)
 #AIC models ~inf
 BOGR.inf.temp.precip.lm <- glmer( num_inf_20220927 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
 BOGR.inf.temp.lm <- glmer( num_inf_20220927 ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop, family = poisson (link ="log"))
@@ -504,3 +506,24 @@ AIC(BOGR.dist_lm)
 AIC(BOGR.dist.elev)
 
 plot(BOGR.crop$length_cm_20220915 ~ BOGR.crop$elev_Z)
+
+library(dplyr)
+ggplot(data = BOGR.crop, aes(y=length_cm_20220801, x= min_wint_temp)) +
+  geom_point() +
+  geom_smooth(method="lm", se = TRUE, color ="blue", fill = "blue")
+
+ggplot(data = BOGR.crop, aes(y=length_cm_20220801, x= min_wint_temp)) +
+  geom_point() +
+  geom_smooth(method="lm",formula = y ~ poly(x, 2), se = TRUE, color ="blue", fill = "blue")
+  
+BOGR_temp_lm <- lmer(log(length_cm_20220801) ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop)
+r.squaredGLMM(BOGR_temp_lm)
+library(MuMIn)
+plot(lmer(length_cm_20220801 ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|Block), data = BOGR.crop))
+
+BOGR_duf_temp_lm <- lmer(log(days_until_flowering) ~ min_wint_temp_Z  + (1|Block), data = BOGR.crop)
+r.squaredGLMM(BOGR_duf_temp_lm)
+
+ggplot(data = BOGR.crop, aes(y=days_until_flowering, x= min_wint_temp)) +
+  geom_point() +
+  geom_smooth(method="lm", formula = y ~ poly(x, 2), se = TRUE, color ="blue", fill = "blue")
