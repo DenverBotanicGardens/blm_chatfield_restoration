@@ -10,6 +10,16 @@ BOGR.wet <- BOGR.crop[BOGR.crop$Treatment !="dry" ,]
 
 BOGR.dry <- BOGR.crop[BOGR.crop$Treatment != "wet" ,]
 
+boxplot(BOGR.wet$length_cm_20220801 ~ BOGR.wet$Population,main = "B.gracilis Height (Wet)", 
+        ylab = "days until flower", xlab= "",col = "blue", cex.axis=0.4, las=2)
+boxplot(BOGR.dry$length_cm_20220801 ~ BOGR.dry$Population,main = "B.gracilis Height (Dry)", 
+        ylab = "days until flower", xlab= "",col = "darkorange", cex.axis=0.4, las=2)
+summary(aov(length_cm_20220801 ~ Population + Treatment, data = BOGR.crop))
+summary(aov(num_inf_20220927 ~ Population + Treatment, data = BOGR.crop))
+summary(aov(days_until_flowering ~ Population + Treatment, data = BOGR.crop))
+
+
+
 #Aim 1 variation
 BOGR_ht_pop_anova <- aov(length_cm_20220801 ~ Population, data = BOGR.crop)
 summary(height_pop_anova)
@@ -67,12 +77,16 @@ new_order_sz <- with(BOGR.crop, reorder(seed_zone, length_cm_20220801, median,  
 boxplot(length_cm_20220801 ~ new_order_sz,data=BOGR, main="B. gracilis Height x Seed Zone", 
         xlab="", ylab="Height(cm)",col = "chartreuse", cex.axis=0.4, las=2)
 
-boxplot(num_inf_20220927 ~ new_order, data = BOGR.crop, 
-        main = "BOGR Number of Inflorescenses by Population", xlab = "Population", 
-        ylab = "Num of Inflorescenses",col = "cadetblue1", cex.axis=0.6, las=2 )
+new_order_inf <- with(BOGR.crop, reorder(Pop_code, num_inf_20220927, median,  na.rm=T))
+boxplot(num_inf_20220927 ~ new_order_inf, data = BOGR.crop, main = "B. gracilis Inflorescenses x Population", xlab = "", 
+        ylab = "Number of Inflorescenses",col = "cadetblue1", cex.axis=0.4, las=2 )
 
+new_order_inf_sz <- with(BOGR.crop, reorder(seed_zone, num_inf_20220927, median,  na.rm=T))
+boxplot(num_inf_20220927 ~ new_order_inf_sz, data = BOGR.crop, main = "B. gracilis Inflorescenses x Seed Zone", xlab = "", 
+        ylab = "Number of Inflorescenses",col = "chartreuse", cex.axis=0.4, las=2 )
 hist(BOGR.crop$num_inf_20220927)
 unique(BOGR.crop$seed_zone)
+
 #infxseedzone
 compare_means(num_inf_20220927 ~ seed_zone, data = BOGR, method = "anova")
 boxplot(num_inf_20220927 ~ seed_zone_code, data = BOGR, 
@@ -95,7 +109,7 @@ hist(BOGR$num_inf_20220927)
 colnames(BOGR.crop)
 
 BOGR_survival_glm <- glm(survival_20220927 ~ Population, 
-                    data = BOGR, family = binomial (link ="logit"))
+                    data = BOGR.crop, family = binomial (link ="logit"))
 
 summary(survival_glm)
 str(BOGR)

@@ -181,8 +181,9 @@ summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_MinWinter_Temp))
 summary(lm(ht_msd$ht_mean ~ ht_msd$Mean_MinWinter_Temp + ht_msd$Mean_MinWinter_Temp2))
 
 #elev
+
 plot(ht_msd$ht_mean ~ ht_msd$elevation, pch = 19, ylim = c(20,60),
-     main = "ERNA population mean height by source elevation", xlab= "Elevation (ft)", ylab = "Height (cm)")
+     xlab= "Elevation (ft)", ylab = "Height (cm)")
 abline(v=5500, col="blue")
 arrows(ht_msd$elevation, (ht_msd$ht_mean-ht_msd$ht_se), ht_msd$elevation, (ht_msd$ht_mean+ht_msd$ht_se), length=0.05, angle = 90, code=3, lwd = .75)
 summary(lm(ht_msd$ht_mean ~ ht_msd$elevation))
@@ -190,13 +191,14 @@ summary(lm(ht_msd$ht_mean ~ ht_msd$elevation + ht_msd$elev2))
 
 lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop)
 
-summary(lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop))
+ht_lm <- lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop)
 Anova(lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop))
-r.squaredGLMM
-ggplot(data = ERNA.crop, aes(y=log(length_cm_20220915), x=elev)) +
+r.squaredGLMM(ht_lm)
+
+ggplot(data = ERNA.crop, aes(y=length_cm_20220915, x=elev) + 
   geom_point() +
-  stat_smooth(method="lm", formula = y ~ x + I(x^2), color="blue", fill = "blue") +
-  geom_errorbar(aes(ymin=ht_mean-ht_se, ymax=ht_mean+ht_se), width=.2)
+  stat_smooth(method="lm", formula = y ~ x + I(x^2), color="blue", fill = "blue"))
+
 
 #dist
 plot(ht_msd$ht_mean ~ ht_msd$sld_km, pch = 19, ylim = c(20,60),
@@ -207,16 +209,14 @@ summary(lm(ht_msd$ht_mean ~ ht_msd$sld_km))
 
 #emmeans tests
 
-ht_sz_lm <- lmer(log(length_cm_20220915) ~ seed_zone_ID + (1|block), data = ERNA.crop)
+ht_sz_lm <- lmer(log(length_cm_20220915) ~ seed_zone + (1|block), data = ERNA.crop)
 pair.ht.sz.lm <- emmeans(ht_sz_lm, specs = pairwise ~ seed_zone_ID)
 plot(pair.ht.sz.lm, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Seed Zone")
 ht.sz.ratio <- pairs(pair.ht.sz.lm, type = "response") 
 as.data.frame(ht.sz.ratio)
 pair.ht.sz.lm
 ht.sz.ratio
-heatmap(ht.sz.ratio)
-str(ht.sz.ratio)
-ht.sz.ratio@contrast
+
 
 ht_pop_lm <- lmer(log(length_cm_20220915) ~ Population + (1|block), data = ERNA.crop)
 pair.ht.pop.lm <- emmeans(ht_pop_lm, specs = pairwise ~ Population)
@@ -227,9 +227,15 @@ survival_glm <- glm(survival_20221108 ~ Population,
 survival_pair <- emmeans(survival_glm, specs = pair)
 
 #emmeans plot
-ht_pop_lm <- lmer(log(length_cm_20220915) ~ Pop_ID + (1|block), data = ERNA.crop)
-pair.ht.pop <- emmeans(ht_pop_lm, specs = pairwise ~ Pop_ID)
+pop_order <- with(ERNA.crop, reorder(Pop_ID, length_cm_20220915, median, na.rm = T))
+ht_pop_lm <- lmer(log(length_cm_20220915) ~ pop_order + (1|block), data = ERNA.crop)
+pair.ht.pop <- emmeans(ht_pop_lm, specs = pairwise ~ pop_order)
 plot(pair.ht.pop, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Population")
+
+sz_order <- with(ERNA.crop, reorder(seed_zone, length_cm_20220915, median, na.rm = T))
+ht_sz_lm <- lmer(log(length_cm_20220915) ~ sz_order + (1|block), data = ERNA.crop)
+pair.ht.sz <- emmeans(ht_sz_lm, specs = pairwise ~ sz_order)
+plot(pair.ht.sz, comparisons = TRUE, xlab = " EMM Height (logged)", ylab = "Seed Zone")
 
 days_mort_pop_an <- aov( days_until_mortality ~ Population, data=ERNA)
 summary(days_mort_pop_an)
@@ -308,13 +314,21 @@ ht.elev_lm <- lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data 
 ht.temp_lm <- lmer(log(length_cm_20220915) ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop)
 ht.dist_lm <- lmer(log(length_cm_20220915) ~ dist_km_Z + (1|block), data = ERNA.crop)
 
-
 models <- list(ht.temp.precip.lm, ht.ppt_lm, ht.elev_lm, ht.temp_lm, ht.dist_lm)
 mod.names <- c('temp.precip','ppt', 'elev', 'temp', 'dist')
 aictab(cand.set = models, modnames = mod.names)
 
-plot(allEffects(ht.elev_lm), main = "Effect of Elevation on ERNA height", xlab = 
-      "Elevation(adjusted)", ylab = "Height (cm) logged")
+ht.elev_lm <- lmer(log(length_cm_20220915) ~ elev_Z + elev_Z2 + (1|block), data = ERNA.crop)
+r.squaredGLMM(ht.elev_lm)
+
+ht.elev.effect <- effects::effect(term= "elev_Z", mod= ht.elev_lm)
+ht.elev.effect.df <- as.data.frame(ht.elev.effect)
+
+ht_plot <- ggplot() + 
+  geom_point(data=subset(ERNA.crop), aes(elev_Z,log(length_cm_20220915))) + 
+  geom_line(data=ht.elev.effect.df, aes(x=elev_Z, y=fit), color="blue") +
+  geom_ribbon(data=ht.elev.effect.df, aes(x=elev_Z, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  labs(x="Elevation", y="Height (logged)")
 
 ht.tx <- lmer(log(length_cm_20220915) ~ Population + treatment + (1|block), data = ERNA.crop)
 ht.pop <- lmer(log(length_cm_20220915) ~ Population +  (1|block), data = ERNA.crop)
@@ -329,10 +343,11 @@ sv.elev_lm <- glmer(survival_20221108 ~ elev_Z + elev_Z2 + (1|block), data = ERN
 sv.temp_lm <- glmer(survival_20221108 ~ min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 sv.dist_lm <- glmer(survival_20221108 ~ dist_km_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 
-
 models <- list(sv.temp.precip.lm, sv.ppt_lm, sv.elev_lm, sv.temp_lm, sv.dist_lm)
 mod.names <- c('temp.ppt', 'ppt', 'elev', 'temp', 'dist')
 aictab(cand.set = models, modnames = mod.names )
+
+r.squaredGLMM(sv.dist_lm)
 
 sv.tx <- glmer(survival_20221108 ~ Population + treatment + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 sv.pop <- glmer(survival_20221108 ~ Population +  (1|block), data = ERNA.crop,family = binomial (link ="logit"))
@@ -353,44 +368,31 @@ fl.elev_lm <- glmer(flowering_Y_N_20221108 ~ elev_Z +  (1|block), data = ERNA.cr
 fl.temp_lm <- glmer(flowering_Y_N_20221108 ~ min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 fl.dist_lm <- glmer(flowering_Y_N_20221108 ~ dist_km_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
 
-
 models <- list(fl.temp.precip.lm2, fl.ppt_lm2, fl.elev_lm2, fl.temp_lm2, fl.dist_lm2, fl.temp.precip.lm, fl.ppt_lm, fl.elev_lm, fl.temp_lm, fl.dist_lm)
 mod.names <- c('temp.ppt2', 'ppt2', 'elev2', 'temp2', 'dist2','temp.ppt', 'ppt', 'elev', 'temp', 'dist')
 aictab(cand.set = models, modnames = mod.names )
 
-#AIC aim 2 chatfield difference
-ht.ch.climate_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_chat + min_wint_temp_chat + elev_chat + dist_km_chat + (1|block), data = ERNA.crop)
-ht.ch.temp.precip.lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_chat + min_wint_temp_chat + (1|block), data = ERNA.crop)
-ht.ch.ppt_lm <- lmer(log(length_cm_20220915) ~ Ppt_Annual_chat + (1|block), data = ERNA.crop)
-ht.ch.elev_lm <- lmer(log(length_cm_20220915) ~ elev_chat + (1|block), data = ERNA.crop)
-ht.ch.temp_lm <- lmer(log(length_cm_20220915) ~ min_wint_temp_chat + (1|block), data = ERNA.crop)
-ht.ch.dist_lm <- lmer(log(length_cm_20220915) ~ dist_km_chat + (1|block), data = ERNA.crop)
-summary(ht.ch.ppt_lm )
-ht.ch.dist.elev <- lmer(log(length_cm_20220915) ~ elev_chat + dist_km_chat + (1|block), data = ERNA.crop)
+fl.temp.precip.lm2 <- glmer(flowering_Y_N_20221108 ~ Ppt_Annual_Z + Ppt_Annual_Z2 + min_wint_temp_Z + min_wint_temp_Z2 + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+r.squaredGLMM(fl.temp.precip.lm2)
 
-models <- list(ht.ch.climate_lm,ht.ch.temp.precip.lm,ht.ch.ppt_lm, ht.ch.elev_lm, ht.ch.temp_lm, ht.ch.dist_lm, ht.ch.dist.elev)
-mod.names <- c('climate', 'temp.ppt', 'ppt', 'elev', 'temp', 'dist', 'dist.elev')
-aictab(cand.set = models, modnames = mod.names )
+fl.ppt.effect <- effects::effect(term= "Ppt_Annual_Z", mod= fl.temp.precip.lm2, default.levels=15)
+fl.ppt.effect.df <- as.data.frame(fl.ppt.effect)
+fl.temp.effect <- effects::effect(term= "min_wint_temp_Z", mod= fl.temp.precip.lm2)
+fl.temp.effect.df <- as.data.frame(fl.temp.effect)
 
-#AIC aim 2 chatfield difference survival
-sv.ch.climate_lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.temp.precip.lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.ppt_lm <- glmer(survival_20221108 ~ Ppt_Annual_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.elev_lm <- glmer(survival_20221108 ~ elev_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.temp_lm <- glmer(survival_20221108 ~ min_wint_temp_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.dist_lm <- glmer(survival_20221108 ~ dist_km_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
-sv.ch.dist.elev <- glmer(survival_20221108 ~ dist_km_Z + elev_chat + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+fl_plot <- ggplot() + 
+  geom_point(data=subset(ERNA.crop), aes(min_wint_temp_Z,flowering_Y_N_20221108)) + 
+  geom_line(data=fl.temp.effect.df, aes(x=min_wint_temp_Z, y=fit), color="blue") +
+  geom_ribbon(data=fl.temp.effect.df, aes(x=min_wint_temp_Z, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  labs(x="Mean Minimum Winter Temperature", y="Flowering")
 
-models <- list(sv.ch.climate_lm,sv.ch.temp.precip.lm,sv.ch.ppt_lm, sv.ch.elev_lm, sv.ch.temp_lm, sv.ch.dist_lm, sv.ch.dist.elev)
-mod.names <- c('climate', 'temp.ppt', 'ppt', 'elev', 'temp', 'dist', 'dist.elev')
-aictab(cand.set = models, modnames = mod.names )
+fl_plot2 <- ggplot() + 
+  geom_point(data=subset(ERNA.crop), aes(Ppt_Annual_Z,flowering_Y_N_20221108)) + 
+  geom_line(data=fl.ppt.effect.df, aes(x=Ppt_Annual_Z, y=fit), color="blue") +
+  geom_ribbon(data=fl.ppt.effect.df, aes(x=Ppt_Annual_Z, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  labs(x="Mean Annual Precipitation", y="Flowering")
 
-plot(length_cm_20220915 ~ dist_km_chat, data = ERNA.crop)
-plot(length_cm_20220915 ~ elev_chat, data = ERNA.crop)
-plot(length_cm_20220915 ~ Ppt_Annual_chat, data = ERNA.crop)
-plot(length_cm_20220915 ~ min_wint_temp_chat, data = ERNA.crop)
-
-#plot climate ~traits
+#plot climate ~ traits
 
 ht_msd <- ERNA.crop %>%                            
   group_by(Population) %>%
@@ -406,3 +408,41 @@ plot(Ppt_Annual_Z ~ Ppt_Annual_chat, data = ERNA.crop)
 plot(ht_msd$Population ~ ERNA.crop$dist_km)
 mean(ERNA.crop$length_cm_20220915)
 str(ERNA.crop$length_cm_20220915)
+
+sv.dist_lm <- glmer(survival_20221108 ~ dist_km_Z + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+
+r.squaredGLMM(sv.dist_lm)
+
+
+ggplot(data = ERNA.crop, aes(y = survival_20221108, x= dist_km)) +
+  geom_point() +
+  geom_smooth(method="lm", formula = y ~ x, se = TRUE, color ="blue", fill = "blue")
+
+#treatment AIC
+ht_tx_lm <- lmer(log(length_cm_20220915) ~ Population + treatment + (1|block), data = ERNA.crop)         
+ht_pop_lm <- lmer(log(length_cm_20220915) ~ Population + (1|block), data = ERNA.crop)
+
+models <- list(ht_tx_lm, ht_pop_lm)
+mod.names <- c("tx", 'pop')
+aictab(cand.set = models, modnames = mod.names)
+
+sv.tx.lm <- glmer(survival_20221108 ~ Population + treatment + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+sv.pop.lm <- glmer(survival_20221108 ~ Population + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+
+models <- list(sv.tx.lm, sv.pop.lm)
+mod.names <- c("tx", 'pop')
+aictab(cand.set = models, modnames = mod.names )
+
+fl.tx.lm <- glmer(flowering_Y_N_20221108 ~ Population + treatment + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+fl.pop.lm <- glmer(flowering_Y_N_20221108 ~ Population + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+
+models <- list(fl.tx.lm, fl.pop.lm)
+mod.names <- c("tx", 'pop')
+aictab(cand.set = models, modnames = mod.names )
+
+duf.tx.lm <- glmer(flowering_Y_N_20221108 ~ Population + treatment + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+duf.pop.lm <- glmer(flowering_Y_N_20221108 ~ Population + (1|block), data = ERNA.crop,family = binomial (link ="logit"))
+
+models <- list(fl.tx.lm, fl.pop.lm)
+mod.names <- c("tx", 'pop')
+aictab(cand.set = models, modnames = mod.names )

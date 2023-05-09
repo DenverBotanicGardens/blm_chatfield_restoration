@@ -15,6 +15,12 @@ ERNA.wet <- ERNA.crop[ERNA.crop$treatment !="dry" ,]
 
 ERNA.dry <- ERNA.crop[ERNA.crop$treatment != "wet" ,]
 
+boxplot(ERNA.wet$length_cm_20220915 ~ ERNA.wet$Pop_ID)
+boxplot(ERNA.dry$length_cm_20220915 ~ ERNA.dry$Pop_ID)
+summary(aov(length_cm_20220915 ~ Population + treatment, data = ERNA.crop))
+summary(aov(survival_20221108 ~ Population + treatment, data = ERNA.crop))
+
+
 #post-hoc tukey test  ht ~ population
 ERNA_ht_pop_anova <- aov(length_cm_20220915 ~ Population, data = ERNA.crop)
 summary(ERNA_ht_pop_anova)
@@ -68,11 +74,11 @@ boxplot(days_until_flower ~ seed_zone, data = ERNA.crop, main = "ERNA Days until
 
 pop_order <- with(ERNA.crop, reorder(Pop_ID, length_cm_20220915, median, na.rm = T))
 boxplot(length_cm_20220915 ~ pop_order ,data=ERNA.crop, main="E. nauseosa Height x Population", 
-        xlab="Population", ylab="Height(cm)", col = "cadetblue1",cex.axis=0.6, las=2)
+        xlab="", ylab="Height(cm)", col = "cadetblue1",cex.axis=0.6, las=2)
 
 sz_order <- with(ERNA.crop, reorder(seed_zone, length_cm_20220915, median, na.rm = T))
 boxplot(length_cm_20220915 ~ sz_order,data=ERNA, main="E. nauseosa Height x Seed Zone", 
-        xlab="Seed Zone", ylab="Height(cm)",col="chartreuse", cex.axis=0.4, las=2)
+        xlab="", ylab="Height(cm)",col="chartreuse", cex.axis=0.4, las=2)
 
 
 survival_glm <- glm(survival_20221108 ~ Population, 
@@ -81,7 +87,7 @@ summary(survival_glm)
 
 str(pop.list)
 
-survival.pred <- predict(survival_glm, pop.list, se.fit = TRUE, type = "response", interval = "confidence" )
+survival.pred <- predict(survival_glm, ERNA.pop.list.df, se.fit = TRUE, type = "response", interval = "confidence" )
 survival.pred
 survival_mat <- matrix(data = survival.pred$fit, nrow = 1, ncol = 20)
 barplot(survival_mat, ylim = c(0,1), xlab = "Population", ylab = "Survival Rate", main = "Survival Rate by Population")
